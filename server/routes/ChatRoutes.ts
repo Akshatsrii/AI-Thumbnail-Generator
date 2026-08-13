@@ -1,31 +1,36 @@
 import { Router, Request, Response } from "express";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 const router = Router();
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 
-// Updated to use the 'gemini-2.5-flash' model
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-router.post("/", async (req: Request, res: Response): Promise<any> => {
+router.post("/", async (req: Request, res: Response) => {
   try {
     const { message } = req.body;
 
     if (!message) {
-      return res.status(400).json({ error: "Message is required" });
+      return res.status(400).json({
+        error: "Message is required",
+      });
     }
 
-    // Generate content
-    const result = await model.generateContent(message);
-    const response = await result.response;
-    const text = response.text();
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: message,
+    });
 
-    return res.json({ reply: text });
-  } catch (error) {
-    console.error("Error communicating with Gemini 2.5:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(200).json({
+      reply: response.text || "No response generated",
+    });
+  } catch (error: any) {
+    console.error("Gemini Error:", error);
+
+    return res.status(500).json({
+      error: error?.message || "Internal Server Error",
+    });
   }
 });
 
