@@ -22,10 +22,12 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", process.env.FRONTEND_URL || ""],
     credentials: true,
   })
 );
+
+app.set("trust proxy", 1); // Trust first proxy (needed for render to set cookies securely)
 
 app.use(
   session({
@@ -34,6 +36,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
     },
     store: MongoStore.create({
       mongoUrl: process.env.MONGODB_URI as string,

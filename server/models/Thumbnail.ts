@@ -8,6 +8,7 @@ export interface IThumbnail extends Document {
   color_scheme?: string;
   text_overlay?: boolean;
   image_url?: string;
+  ai_prompt?: string;
   isGenerating?: boolean;
 }
 
@@ -24,6 +25,7 @@ const ThumbnailSchema = new mongoose.Schema<IThumbnail>(
     color_scheme: String,
     text_overlay: Boolean,
     image_url: { type: String, default: "" },
+    ai_prompt: String,
     isGenerating: { type: Boolean, default: false },
   },
   { timestamps: true }

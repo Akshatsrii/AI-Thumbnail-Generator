@@ -100,11 +100,14 @@ export const LogoutUser = async (req: Request, res: Response): Promise<any> => {
 // ============================
 export const VerifyUser = async (req: Request, res: Response): Promise<any> => {
   try {
-    // The 'protect' middleware puts the user object in req.user
-    const user = (req as any).user;
+    const session = req.session as any;
 
-    // If user is not logged in, return 200 OK with isLoggedIn: false
-    // This prevents the red error in browser console
+    if (!session || !session.userId) {
+      return res.status(200).json({ isLoggedIn: false, user: null });
+    }
+
+    const user = await User.findById(session.userId);
+    
     if (!user) {
       return res.status(200).json({ isLoggedIn: false, user: null });
     }
