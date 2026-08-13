@@ -26,10 +26,6 @@ export const generateThumbnail = async (req: Request, res: Response): Promise<an
 
     /* ---------- 1️⃣ GEMINI PROMPT (TEXT) ---------- */
     // Using gemini-2.5-flash for better prompt reasoning
-    const model = ai.getGenerativeModel({
-      model: "gemini-2.5-flash",
-    });
-
     const prompt = `
       You are an expert prompt engineer for AI image generators (like Imagen 3).
       Create a highly detailed, descriptive image prompt for a YouTube thumbnail.
@@ -47,41 +43,26 @@ export const generateThumbnail = async (req: Request, res: Response): Promise<an
       - Describe the lighting, composition, subject, and mood in detail.
     `;
 
-    const result = await model.generateContent(prompt);
-    const aiPrompt = result.response.text().trim();
+    const result = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+    const aiPrompt = result.text ? result.text.trim() : "";
 
     /* ---------- 2️⃣ IMAGE GENERATION (REAL IMAGEN 3) ---------- */
-    // We use a direct fetch here because the Imagen model requires a specific endpoint structure
-    // that varies slightly across SDK versions. This ensures it works 100%.
-    
-    const imagenUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${process.env.GEMINI_API_KEY}`;
-    
-    const imagenResponse = await fetch(imagenUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    // Using the official @google/genai SDK for image generation
+    const imageResponse = await ai.models.generateImages({
+      model: "imagen-3.0-generate-001",
+      prompt: aiPrompt,
+      config: {
+        numberOfImages: 1,
+        aspectRatio: aspect_ratio || "16:9",
+        personGeneration: "ALLOW_ADULT", // Enum is usually uppercase in SDK
       },
-      body: JSON.stringify({
-        instances: [
-          { prompt: aiPrompt }
-        ],
-        parameters: {
-          aspectRatio: aspect_ratio || "16:9", // Default to 16:9 if missing
-          sampleCount: 1,
-          personGeneration: "allow_adult",
-        },
-      }),
     });
 
-    if (!imagenResponse.ok) {
-        const errorText = await imagenResponse.text();
-        throw new Error(`Imagen API Error: ${errorText}`);
-    }
-
-    const imagenData = await imagenResponse.json();
-    
     // Extract Base64 image
-    const base64Image = imagenData.predictions?.[0]?.bytesBase64Encoded;
+    const base64Image = imageResponse.generatedImages?.[0]?.image?.imageBytes;
     
     if (!base64Image) {
         throw new Error("Failed to generate image (No data returned)");
