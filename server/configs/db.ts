@@ -3,14 +3,20 @@ import mongoose from "mongoose";
 const connectDB = async () => {
   try {
     mongoose.connection.on("connected", () => {
-      console.log("MongoDB connected (Local Compass)");
+      console.log("MongoDB Connected");
     });
 
     mongoose.connection.on("error", (err) => {
-      console.error("MongoDB connection error:", err);
+      console.error("MongoDB Connection Error:", err);
     });
 
-    await mongoose.connect("mongodb://127.0.0.1:27017/thumbnail_app");
+    const mongoURI = process.env.MONGO_URI;
+
+    if (!mongoURI) {
+      throw new Error("MONGO_URI is not defined in environment variables");
+    }
+
+    await mongoose.connect(mongoURI);
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
     process.exit(1);
