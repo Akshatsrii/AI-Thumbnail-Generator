@@ -3,10 +3,10 @@ import Thumbnail from "../models/Thumbnail";
 import ai from "../configs/ai";
 import { v2 as cloudinary } from "cloudinary";
 
-/* ============================
-   🎯 GENERATE THUMBNAIL (GEMINI + IMAGEN)
-   ============================ */
-export const generateThumbnail = async (req: Request, res: Response): Promise<any> => {
+export const generateThumbnail = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     const userId = (req as any).user.id;
 
@@ -16,33 +16,31 @@ export const generateThumbnail = async (req: Request, res: Response): Promise<an
       color_scheme,
       aspect_ratio,
       text_overlay,
+      additional_details,
     } = req.body;
 
     if (!title || !style) {
-      return res
-        .status(400)
-        .json({ message: "title & style required" });
+      return res.status(400).json({
+        message: "title & style required",
+      });
     }
 
+<<<<<<< HEAD
     /* ---------- 1️⃣ GEMINI PROMPT (TEXT) ---------- */
     // Using gemini-2.5-flash for better prompt reasoning
+=======
+>>>>>>> 37b1e49 (Fix Gemini image generation and deployment)
     const prompt = `
-      You are an expert prompt engineer for AI image generators (like Imagen 3).
-      Create a highly detailed, descriptive image prompt for a YouTube thumbnail.
-      
-      User Inputs:
-      - Title: "${title}"
-      - Style: "${style}"
-      - Color scheme: "${color_scheme}"
-      - Aspect Ratio: "${aspect_ratio}"
-      - Text overlay: ${text_overlay ? "Yes" : "No"}
+Create a professional, highly clickable YouTube thumbnail.
 
-      Strict Output Rules:
-      - Provide ONLY the raw English prompt string.
-      - Do NOT include words like "Prompt:", "Here is the prompt", or markdown.
-      - Describe the lighting, composition, subject, and mood in detail.
-    `;
+Topic: ${title}
+Style: ${style}
+Color Scheme: ${color_scheme || "Vibrant"}
+Aspect Ratio: ${aspect_ratio || "16:9"}
+Text Overlay: ${text_overlay ? "Yes" : "No"}
+Additional Details: ${additional_details || "None"}
 
+<<<<<<< HEAD
     const result = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
@@ -64,21 +62,56 @@ export const generateThumbnail = async (req: Request, res: Response): Promise<an
     // Extract Base64 image
     const base64Image = imageResponse.generatedImages?.[0]?.image?.imageBytes;
     
-    if (!base64Image) {
-        throw new Error("Failed to generate image (No data returned)");
+=======
+Requirements:
+- Bold and eye-catching
+- Strong focal point
+- High contrast
+- Modern YouTube thumbnail design
+- Professional lighting
+- Visually engaging background
+- Clear composition
+- Use the requested color scheme
+- Make the topic immediately understandable
+- ${text_overlay ? "Include short, readable text related to the topic" : "Do not add unnecessary text"}
+`;
+
+    // Generate IMAGE directly with Gemini
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-image",
+      contents: prompt,
+      config: {
+        responseModalities: ["TEXT", "IMAGE"],
+        imageConfig: {
+          aspectRatio: aspect_ratio || "16:9",
+        },
+      },
+    });
+
+    let base64Image: string | null = null;
+
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData?.data) {
+        base64Image = part.inlineData.data;
+        break;
+      }
     }
 
-    /* ---------- 3️⃣ UPLOAD TO CLOUDINARY ---------- */
-    // Upload the base64 string directly
+>>>>>>> 37b1e49 (Fix Gemini image generation and deployment)
+    if (!base64Image) {
+      throw new Error("Gemini did not return an image");
+    }
+
+    // Upload Gemini image to Cloudinary
     const uploadResponse = await cloudinary.uploader.upload(
-      `data:image/png;base64,${base64Image}`, 
+      `data:image/png;base64,${base64Image}`,
       {
         folder: "thumbnails",
         resource_type: "image",
       }
     );
 
-    /* ---------- 4️⃣ SAVE IN DB ---------- */
+    // Save in MongoDB
     const thumbnail = await Thumbnail.create({
       userId,
       title,
@@ -87,45 +120,62 @@ export const generateThumbnail = async (req: Request, res: Response): Promise<an
       aspect_ratio,
       text_overlay,
       image_url: uploadResponse.secure_url,
-      ai_prompt: aiPrompt,
+      ai_prompt: prompt,
       isGenerating: false,
     });
 
-    res.json({
+    return res.status(200).json({
       message: "Thumbnail generated successfully",
       thumbnail,
     });
   } catch (err: any) {
     console.error("Generation Error:", err);
-    res.status(500).json({ message: err.message || "Something went wrong" });
+
+    return res.status(500).json({
+      message: err?.message || "Something went wrong",
+    });
   }
 };
 
-/* ============================
-   📚 MY GENERATIONS
-   ============================ */
-export const getMyGenerations = async (req: Request, res: Response) => {
+export const getMyGenerations = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     const userId = (req as any).user.id;
 
     const thumbnails = await Thumbnail.find({ userId })
       .sort({ createdAt: -1 });
 
-    res.json({ thumbnails });
+    return res.status(200).json({
+      thumbnails,
+    });
   } catch (err: any) {
-    res.status(500).json({ message: err.message });
+    console.error("Get generations error:", err);
+
+    return res.status(500).json({
+      message: err?.message || "Failed to fetch generations",
+    });
   }
 };
 
-/* ============================
-   🗑 DELETE
-   ============================ */
-export const deleteThumbnail = async (req: Request, res: Response) => {
+export const deleteThumbnail = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     const { id } = req.params;
+
     await Thumbnail.findByIdAndDelete(id);
-    res.json({ message: "Thumbnail deleted" });
-  } catch {
-    res.status(500).json({ message: "Delete failed" });
+
+    return res.status(200).json({
+      message: "Thumbnail deleted",
+    });
+  } catch (err: any) {
+    console.error("Delete thumbnail error:", err);
+
+    return res.status(500).json({
+      message: err?.message || "Delete failed",
+    });
   }
 };
