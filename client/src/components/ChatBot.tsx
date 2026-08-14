@@ -144,9 +144,9 @@ export default function ChatBot() {
       {/* Chat Window */}
       {open && (
         <div 
-          className={\`fixed bottom-24 right-6 z-50 w-80 sm:w-96 rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden transition-all duration-300 \${
-            isMinimized ? 'h-[60px]' : 'h-[500px]'
-          }\`}
+          className={`fixed bottom-24 right-6 z-50 w-80 sm:w-96 rounded-2xl bg-neutral-900/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden transition-all duration-300 ${
+  isMinimized ? "h-[60px]" : "h-[500px]"
+}`}
         >
           {/* Header */}
           <div className="flex justify-between items-center bg-white/5 border-b border-white/10 px-4 py-3 h-[60px]">
@@ -195,23 +195,35 @@ export default function ChatBot() {
                 onWheel={(e) => e.stopPropagation()}
               >
                 {messages.map((msg, i) => (
-                  <div key={i} className={\`flex \${msg.role === "user" ? "justify-end" : "justify-start"}\`}>
-                    <div className={\`flex flex-col max-w-[85%] \${msg.role === "user" ? "items-end" : "items-start"}\`}>
-                      <div
-                        className={\`rounded-2xl px-4 py-2.5 text-sm \${
-                          msg.role === "user"
-                            ? "bg-pink-600 text-white rounded-br-sm shadow-md shadow-pink-900/20"
-                            : "bg-white/10 text-gray-100 rounded-bl-sm border border-white/5"
-                        }\`}
-                      >
-                        <div className="whitespace-pre-wrap leading-relaxed">{msg.text}</div>
-                      </div>
-                      <div className="text-[10px] mt-1 text-gray-500 px-1">
-                        {formatTime(msg.timestamp)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+  <div
+    key={i}
+    className={`flex ${
+      msg.role === "user" ? "justify-end" : "justify-start"
+    }`}
+  >
+    <div
+      className={`flex flex-col max-w-[85%] ${
+        msg.role === "user" ? "items-end" : "items-start"
+      }`}
+    >
+      <div
+        className={`rounded-2xl px-4 py-2.5 text-sm ${
+          msg.role === "user"
+            ? "bg-pink-600 text-white rounded-br-sm shadow-md shadow-pink-900/20"
+            : "bg-white/10 text-gray-100 rounded-bl-sm border border-white/5"
+        }`}
+      >
+        <div className="whitespace-pre-wrap leading-relaxed">
+          {msg.text}
+        </div>
+
+        <div className="text-[10px] mt-1 text-gray-500 px-1">
+          {formatTime(msg.timestamp)}
+        </div>
+      </div>
+    </div>
+  </div>
+))}
 
                 {loading && (
                   <div className="flex justify-start">
