@@ -23,20 +23,15 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   "http://localhost:3000",
-
-  // Yahan apna deployed FRONTEND URL add karo
-  // Example:
-  // "https://your-frontend.onrender.com",
-];
+  process.env.FRONTEND_URL || "",
+].filter(Boolean);
 
 app.use(
   cors({
-<<<<<<< HEAD
-    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", process.env.FRONTEND_URL || ""],
-=======
     origin: (origin, callback) => {
-      // Allow requests without an Origin
+      // Allow requests without Origin
       if (!origin) {
         return callback(null, true);
       }
@@ -47,28 +42,27 @@ app.use(
 
       return callback(new Error(`CORS blocked for origin: ${origin}`));
     },
->>>>>>> 37b1e49 (Fix Gemini image generation and deployment)
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-<<<<<<< HEAD
-app.set("trust proxy", 1); // Trust first proxy (needed for render to set cookies securely)
-=======
 app.options("*", cors());
+
+/* -------------------- Render Proxy -------------------- */
+
+app.set("trust proxy", 1);
 
 /* -------------------- MongoDB -------------------- */
 
 const mongoURI = process.env.MONGO_URI;
 
 if (!mongoURI) {
-  throw new Error("MONGO_URI is not defined in .env");
+  throw new Error("MONGO_URI is not defined");
 }
 
 /* -------------------- Session -------------------- */
->>>>>>> 37b1e49 (Fix Gemini image generation and deployment)
 
 app.use(
   session({
@@ -78,18 +72,10 @@ app.use(
 
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7,
-<<<<<<< HEAD
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      secure: process.env.NODE_ENV === "production",
-=======
       httpOnly: true,
-
-      // Local = false, Render/HTTPS = true
       secure: process.env.NODE_ENV === "production",
-
-      // Cross-origin frontend/backend ke liye production me none
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
->>>>>>> 37b1e49 (Fix Gemini image generation and deployment)
+      sameSite:
+        process.env.NODE_ENV === "production" ? "none" : "lax",
     },
 
     store: MongoStore.create({

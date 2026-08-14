@@ -25,11 +25,6 @@ export const generateThumbnail = async (
       });
     }
 
-<<<<<<< HEAD
-    /* ---------- 1️⃣ GEMINI PROMPT (TEXT) ---------- */
-    // Using gemini-2.5-flash for better prompt reasoning
-=======
->>>>>>> 37b1e49 (Fix Gemini image generation and deployment)
     const prompt = `
 Create a professional, highly clickable YouTube thumbnail.
 
@@ -40,29 +35,6 @@ Aspect Ratio: ${aspect_ratio || "16:9"}
 Text Overlay: ${text_overlay ? "Yes" : "No"}
 Additional Details: ${additional_details || "None"}
 
-<<<<<<< HEAD
-    const result = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-    const aiPrompt = result.text ? result.text.trim() : "";
-
-    /* ---------- 2️⃣ IMAGE GENERATION (REAL IMAGEN 3) ---------- */
-    // Using the official @google/genai SDK for image generation
-    const imageResponse = await ai.models.generateImages({
-      model: "imagen-3.0-generate-001",
-      prompt: aiPrompt,
-      config: {
-        numberOfImages: 1,
-        aspectRatio: aspect_ratio || "16:9",
-        personGeneration: "ALLOW_ADULT", // Enum is usually uppercase in SDK
-      },
-    });
-
-    // Extract Base64 image
-    const base64Image = imageResponse.generatedImages?.[0]?.image?.imageBytes;
-    
-=======
 Requirements:
 - Bold and eye-catching
 - Strong focal point
@@ -73,10 +45,14 @@ Requirements:
 - Clear composition
 - Use the requested color scheme
 - Make the topic immediately understandable
-- ${text_overlay ? "Include short, readable text related to the topic" : "Do not add unnecessary text"}
+- ${
+      text_overlay
+        ? "Include short, readable text related to the topic"
+        : "Do not add unnecessary text"
+    }
 `;
 
-    // Generate IMAGE directly with Gemini
+    // Generate image directly with Gemini
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-image",
       contents: prompt,
@@ -97,12 +73,11 @@ Requirements:
       }
     }
 
->>>>>>> 37b1e49 (Fix Gemini image generation and deployment)
     if (!base64Image) {
       throw new Error("Gemini did not return an image");
     }
 
-    // Upload Gemini image to Cloudinary
+    // Upload image to Cloudinary
     const uploadResponse = await cloudinary.uploader.upload(
       `data:image/png;base64,${base64Image}`,
       {
@@ -144,8 +119,9 @@ export const getMyGenerations = async (
   try {
     const userId = (req as any).user.id;
 
-    const thumbnails = await Thumbnail.find({ userId })
-      .sort({ createdAt: -1 });
+    const thumbnails = await Thumbnail.find({ userId }).sort({
+      createdAt: -1,
+    });
 
     return res.status(200).json({
       thumbnails,
